@@ -18,6 +18,7 @@ const initDB = async(db) => {
         Organization TEXT,
         Position TEXT,
         ContractNo TEXT,
+        EmailAddress TEXT UNIQUE,
         Password TEXT,
         AutorityLv INTEGER
       );
@@ -40,7 +41,10 @@ export default function App() {
           <Drawer.Screen name = 'Login' component={LoginScreen}/>
           <Drawer.Screen name = 'Register' component={RegisterScreen}/>
           <Drawer.Screen name = 'Home' component={HomeScreen}/>
-          <Drawer.Screen name = 'Form' component={FormScreen}/>
+          <Drawer.Screen name = 'Report' component={HomeScreen}/>
+          <Drawer.Screen name = 'From' component={HomeScreen}/>
+          <Drawer.Screen name = 'CreateReport' component={FormScreen}/>
+          <Drawer.Screen name = 'FillingForm' component={FormScreen}/>
 
         </Drawer.Navigator>
       </NavigationContainer>
@@ -79,11 +83,41 @@ const HomeScreen = ({navigation}) => {
   )
 }
 
+const ReportScreen = ({navigation}) => {
+  return (
+    <View style = {styles.container}>
+      <Text style = {styles.title}>
+        Report Page
+      </Text>
+    </View>
+  )
+}
+
 const FormScreen = ({navigation}) => {
   return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
-        Form Page
+        Table Page
+      </Text>
+    </View>
+  )
+}
+
+const CreateReportScreen = ({navigation}) => {
+  return (
+    <View style = {styles.container}>
+      <Text style = {styles.title}>
+        Create new report Page
+      </Text>
+    </View>
+  )
+}
+
+const FillingFormScreen = ({navigation}) => {
+  return (
+    <View style = {styles.container}>
+      <Text style = {styles.title}>
+        Filling data page
       </Text>
     </View>
   )
