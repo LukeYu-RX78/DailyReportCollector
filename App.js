@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack'; 
@@ -41,10 +41,10 @@ export default function App() {
           <Drawer.Screen name = 'Login' component={LoginScreen}/>
           <Drawer.Screen name = 'Register' component={RegisterScreen}/>
           <Drawer.Screen name = 'Home' component={HomeScreen}/>
-          <Drawer.Screen name = 'Report' component={HomeScreen}/>
-          <Drawer.Screen name = 'From' component={HomeScreen}/>
-          <Drawer.Screen name = 'CreateReport' component={FormScreen}/>
-          <Drawer.Screen name = 'FillingForm' component={FormScreen}/>
+          <Drawer.Screen name = 'Report' component={ReportScreen}/>
+          <Drawer.Screen name = 'From' component={FormScreen}/>
+          <Drawer.Screen name = 'CreateReport' component={CreateReportScreen}/>
+          <Drawer.Screen name = 'FillingForm' component={FillingFormScreen}/>
 
         </Drawer.Navigator>
       </NavigationContainer>
@@ -57,8 +57,29 @@ const LoginScreen = ({navigation}) => {
   return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
-        Login Page
+        Login
       </Text>
+      <TextInput 
+        style = {styles.input}
+        placeholder='Please enter your email'
+      />
+      <TextInput 
+        style = {styles.input}
+        placeholder='Please enter your password'
+        secureTextEntry
+      />
+      <Pressable 
+        style = {styles.button} 
+        onPress = {() => navigation.navigate('Home')}
+      >
+        <Text style = {styles.buttonText}>Sign in</Text>
+      </Pressable>
+      <Pressable 
+        style = {styles.link}
+        onPress = {() => navigation.navigate('Register')}
+      >
+        <Text style = {styles.linkText}>Don't have an Account? Sign up</Text>
+      </Pressable>
     </View>
   )
 }
@@ -69,6 +90,32 @@ const RegisterScreen = ({navigation}) => {
       <Text style = {styles.title}>
         Register Page
       </Text>
+      <TextInput 
+        style = {styles.input}
+        placeholder='Username'
+      />
+      <TextInput 
+        style = {styles.input}
+        placeholder='Password'
+        secureTextEntry
+      />
+      <TextInput 
+        style = {styles.input}
+        placeholder='Confirm password'
+        secureTextEntry
+      />
+      <Pressable 
+        style = {styles.button} 
+        onPress = {() => navigation.navigate('Home')}
+      >
+        <Text style = {styles.buttonText}>Sign up</Text>
+      </Pressable>
+      <Pressable 
+        style = {styles.link}
+        onPress = {() => navigation.navigate('Login')}
+      >
+        <Text style = {styles.linkText}>Already have an account? Sign in</Text>
+      </Pressable>
     </View>
   )
 }
@@ -132,7 +179,33 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    marginBottom: 30,
 
+  },
+  input: {
+    width: '80%',
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#CCC',
+    marginVertical: 5,
+  },
+  button: {
+    backgroundColor: 'blue',
+    padding: 10,
+    marginVertical: 10,
+    width: '80%',
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 18,
+  },
+  link: {
+    marginTop: 10,
+  },
+  linkText: {
+    color: 'blue',
   }
 });
