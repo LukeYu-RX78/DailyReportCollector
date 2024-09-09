@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput, Pressable } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Pressable, Alert } from 'react-native';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack'; 
@@ -8,6 +8,8 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import React, { Component } from 'react';
 import { AppRegistry } from 'react-native';
 import { Button, Provider, Toast } from '@ant-design/react-native';
+
+import { useState } from 'react';
 
 
 const initDB = async(db) => {
@@ -21,7 +23,6 @@ const initDB = async(db) => {
         LastName TEXT,
         Organization TEXT,
         Position TEXT,
-        ContractNo TEXT,
         EmailAddress TEXT UNIQUE,
         Password TEXT,
         AutorityLv INTEGER
@@ -91,14 +92,14 @@ export default function App() {
     <SQLiteProvider databaseName = 'report.db' onInit = {initDB}>
       <NavigationContainer>
         <Drawer.Navigator initialRouteName='Home'>
-          <Drawer.Screen name = 'SignIn' component={LoginScreen}/>
-          <Drawer.Screen name = 'SignUp' component={RegisterScreen}/>
+          <Drawer.Screen name = 'SignIn' component={SignInScreen}/>
+          <Drawer.Screen name = 'SignUp' component={SignUpScreen}/>
           <Drawer.Screen name = 'Home' component={HomeScreen}/>
-          <Drawer.Screen name = 'Report' component={ReportScreen}/>
-          <Drawer.Screen name = 'From' component={FormScreen}/>
-          <Drawer.Screen name = 'CreateReport' component={CreateReportScreen}/>
-          <Drawer.Screen name = 'FillingForm' component={FillingFormScreen}/>
-
+          <Drawer.Screen name = 'AllReports' component={ReportsScreen}/>
+          <Drawer.Screen name = 'ReportFroms' component={FormsScreen}/>
+          <Drawer.Screen name = 'NewReport' component={NewReportScreen}/>
+          <Drawer.Screen name = 'EditForm' component={EditFormScreen}/>
+          <Drawer.Screen name = 'UserInfo' component={UserScreen}/>
         </Drawer.Navigator>
       </NavigationContainer>
     </SQLiteProvider>
@@ -106,7 +107,7 @@ export default function App() {
 };
 
 
-const LoginScreen = ({navigation}) => {
+const SignInScreen = ({navigation}) => {
   return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
@@ -129,7 +130,7 @@ const LoginScreen = ({navigation}) => {
       </Pressable>
       <Pressable 
         style = {styles.link}
-        onPress = {() => navigation.navigate('Register')}
+        onPress = {() => navigation.navigate('SignUp')}
       >
         <Text style = {styles.linkText}>Don't have an Account? Sign up</Text>
       </Pressable>
@@ -137,7 +138,44 @@ const LoginScreen = ({navigation}) => {
   )
 }
 
-const RegisterScreen = ({navigation}) => {
+const SignUpScreen = ({navigation}) => {
+
+  const db = useSQLiteContext();
+
+
+  const [firstName, setFirstName] = useState('');
+  const [middleName, setMiddleName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [emailAddress, setEmailAddress] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [organization, setOrganization] = useState('Stark Industries');
+  const [position, setPosition] = useState('EMPLOYEE');
+  const [autorityLv, setAutorityLv] = useState('3');
+
+  /*
+  const handleSignUp = async() => {
+    if (firstName.length === 0 || lastName.length === 0 
+      || organization.length === 0 || emailAddress.length === 0 
+      || password === 0 || confirmPassword === 0)
+    {
+      Alert.alert('First and last name, organization, email address, password and confirmpassword can not be null!');
+      return;
+    }
+    if (confirmPassword !== password) {
+      Alert.alert('Password do not match!')
+    }
+    try {
+      const existingUser = await db.getFirstAsync('SELECT * FROM Account where EmailAddress = ?', [emailAddress]);
+      if (existingUser) {
+        Alert.alert('This email address has alredy been used.');
+        return;
+      }
+      await db.runAsync('INSERT INTO Account (FirstName, MiddleName, LastName, Organization, Position, ContractNo, EmailAddress, Password, AuthorityLv) VALUES ('Luke', NULL, 'Yu', 'EarthSQL', 'Developer', '0000000000', 'luke.yu@earthsql.com', '123456', '6');')
+    }
+
+  }*/
+
   return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
@@ -145,39 +183,54 @@ const RegisterScreen = ({navigation}) => {
       </Text>
       <TextInput 
         style = {styles.input}
-        placeholder='First Name'
+        placeholder ='First Name'
+        Value =  {firstName}
+        onChange={setFirstName}
       />
       <TextInput 
         style = {styles.input}
-        placeholder='Middle Name'
+        placeholder ='Middle Name'
+        Value =  {middleName}
+        onChange={setMiddleName}
       />
       <TextInput 
         style = {styles.input}
-        placeholder='Last Name'
+        placeholder ='Last Name'
+        Value =  {lastName}
+        onChange={setLastName}
       />
       <TextInput 
         style = {styles.input}
-        placeholder='Email Address'
+        placeholder ='Email Address'
+        Value =  {emailAddress}
+        onChange={setEmailAddress}
       />
       <TextInput 
         style = {styles.input}
-        placeholder='Password'
+        placeholder ='Password'
         secureTextEntry
+        Value =  {password}
+        onChange={setPassword}
       />
       <TextInput 
         style = {styles.input}
-        placeholder='Confirm password'
+        placeholder ='Confirm password'
         secureTextEntry
+        Value =  {confirmPassword}
+        onChange={setConfirmPassword}
       />
       <TextInput 
         style = {styles.input}
-        placeholder='Organization'
-        secureTextEntry
+        placeholder ='Organization'
+        Value =  {organization}
+        onChange={setOrganization}
       />
       <TextInput 
         style = {styles.input}
-        placeholder='Position'
-        secureTextEntry
+        placeholder ='Position'
+        Value =  {position}
+        onChange={setPosition}
+
       />
       <Pressable 
         style = {styles.button} 
@@ -187,7 +240,7 @@ const RegisterScreen = ({navigation}) => {
       </Pressable>
       <Pressable 
         style = {styles.link}
-        onPress = {() => navigation.navigate('Login')}
+        onPress = {() => navigation.navigate('SignIn')}
       >
         <Text style = {styles.linkText}>Already have an account? Sign in</Text>
       </Pressable>
@@ -198,38 +251,44 @@ const RegisterScreen = ({navigation}) => {
 const HomeScreen = ({navigation}) => {
   return (
     <View style = {styles.container}>
+      <Text style = {styles.home_title}>
+        Welcome to Daily Report Collector!
+      </Text>
+      <Pressable 
+        style = {styles.button} 
+        onPress = {() => navigation.navigate('SignIn')}
+      >
+        <Text style = {styles.buttonText}>Sign Out</Text>
+      </Pressable>
+    </View>
+  )
+}
+
+const ReportsScreen = ({navigation}) => {
+  return (
+    <View style = {styles.container}>
       <Text style = {styles.title}>
-        Home Page
+        View All Reports
       </Text>
     </View>
   )
 }
 
-const ReportScreen = ({navigation}) => {
+const FormsScreen = ({navigation}) => {
   return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
-        Report Page
+        View Report Forms
       </Text>
     </View>
   )
 }
 
-const FormScreen = ({navigation}) => {
+const NewReportScreen = ({navigation}) => {
   return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
-        Table Page
-      </Text>
-    </View>
-  )
-}
-
-const CreateReportScreen = ({navigation}) => {
-  return (
-    <View style = {styles.container}>
-      <Text style = {styles.title}>
-        Create new report Page
+        Create New Report
       </Text>
       <Provider>
         <Button onPress={() => Toast.info('This is a toast tips')}>
@@ -240,16 +299,25 @@ const CreateReportScreen = ({navigation}) => {
   )
 }
 
-const FillingFormScreen = ({navigation}) => {
+const EditFormScreen = ({navigation}) => {
   return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
-        Filling data page
+        Edit From Data
       </Text>
     </View>
   )
 }
 
+const UserScreen = ({navigation}) => {
+  return (
+    <View style = {styles.container}>
+      <Text style = {styles.title}>
+        View User Info
+      </Text>
+    </View>
+  )
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -261,7 +329,11 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 30,
-
+  },
+  home_title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 64,
   },
   input: {
     width: '80%',
