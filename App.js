@@ -5,6 +5,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack'; 
 import { createDrawerNavigator } from '@react-navigation/drawer';
 
+import React, { Component } from 'react';
+import { AppRegistry } from 'react-native';
+import { Button, Provider, Toast } from '@ant-design/react-native';
+
 
 const initDB = async(db) => {
   try {
@@ -22,10 +26,59 @@ const initDB = async(db) => {
         Password TEXT,
         AutorityLv INTEGER
       );
+      CREATE TABLE IF NOT EXISTS DrillReport (
+        RefID INTEGER PRIMARY KEY AUTOINCREMENT,
+        UID INTEGER,
+        ContractNo TEXT,
+        Client TEXT,
+        RigID TEXT,
+        Department TEXT,
+        Date TEXT,
+        Shift TEXT,
+        Day TEXT,
+        DayType TEXT,
+        MachineHrsFrom REAL,
+        MachineHrsTo REAL,
+        Location TEXT,
+        TotalMetres REAL,
+        DrillingHrs REAL,
+        [Metres/DrillingHr] REAL,
+        TotalActivityHrs REAL,
+        [Metres/TotalHr] REAL,
+        Comments TEXT,
+        ReportState INTEGER
+      );
+      CREATE TABLE IF NOT EXISTS Drilling (
+        DID INTEGER PRIMARY KEY AUTOINCREMENT,
+        RefID INTEGER,
+        HoleID TEXT,
+        Angle REAL,
+        DrillType TEXT,
+        Size TEXT,
+        [From] REAL,
+        [To] REAL,
+        TotalMetres REAL,
+        Barrel TEXT,
+        RecovMetres REAL,
+        DCIMetres REAL,
+        [N/CMetres] REAL
+      );
+      CREATE TABLE IF NOT EXISTS AziAligner (
+        AziID INTEGER PRIMARY KEY AUTOINCREMENT,
+        RefID INTEGER,
+        HoleID TEXT,
+        Dip REAL,
+        Azimuth REAL
+      );
+      CREATE TABLE IF NOT EXISTS LookupList (
+        ContractNo TEXT,
+        Attribute TEXT,
+        Options TEXT
+      );
     `);
-    console.log('creat account table !!!');
+    console.log('creat tables in SQlite !');
   } catch (error) {
-    console.log('Error :', error, ' !!!');
+    console.log('Error :', error, ' !');
   }
 };
 
@@ -38,8 +91,8 @@ export default function App() {
     <SQLiteProvider databaseName = 'report.db' onInit = {initDB}>
       <NavigationContainer>
         <Drawer.Navigator initialRouteName='Home'>
-          <Drawer.Screen name = 'Login' component={LoginScreen}/>
-          <Drawer.Screen name = 'Register' component={RegisterScreen}/>
+          <Drawer.Screen name = 'SignIn' component={LoginScreen}/>
+          <Drawer.Screen name = 'SignUp' component={RegisterScreen}/>
           <Drawer.Screen name = 'Home' component={HomeScreen}/>
           <Drawer.Screen name = 'Report' component={ReportScreen}/>
           <Drawer.Screen name = 'From' component={FormScreen}/>
@@ -57,7 +110,7 @@ const LoginScreen = ({navigation}) => {
   return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
-        Login
+        Sign In Page
       </Text>
       <TextInput 
         style = {styles.input}
@@ -88,7 +141,7 @@ const RegisterScreen = ({navigation}) => {
   return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
-        Register Page
+        Sign Up Page
       </Text>
       <TextInput 
         style = {styles.input}
@@ -178,6 +231,11 @@ const CreateReportScreen = ({navigation}) => {
       <Text style = {styles.title}>
         Create new report Page
       </Text>
+      <Provider>
+        <Button onPress={() => Toast.info('This is a toast tips')}>
+          Start
+        </Button>
+      </Provider>
     </View>
   )
 }
