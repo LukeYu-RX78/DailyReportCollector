@@ -92,7 +92,19 @@ const RegisterScreen = ({navigation}) => {
       </Text>
       <TextInput 
         style = {styles.input}
-        placeholder='Username'
+        placeholder='First Name'
+      />
+      <TextInput 
+        style = {styles.input}
+        placeholder='Middle Name'
+      />
+      <TextInput 
+        style = {styles.input}
+        placeholder='Last Name'
+      />
+      <TextInput 
+        style = {styles.input}
+        placeholder='Email Address'
       />
       <TextInput 
         style = {styles.input}
@@ -102,6 +114,16 @@ const RegisterScreen = ({navigation}) => {
       <TextInput 
         style = {styles.input}
         placeholder='Confirm password'
+        secureTextEntry
+      />
+      <TextInput 
+        style = {styles.input}
+        placeholder='Organization'
+        secureTextEntry
+      />
+      <TextInput 
+        style = {styles.input}
+        placeholder='Position'
         secureTextEntry
       />
       <Pressable 
