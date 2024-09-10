@@ -5,11 +5,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack'; 
 import { createDrawerNavigator } from '@react-navigation/drawer';
 
-import React, { Component } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import { AppRegistry } from 'react-native';
 import { Button, Provider, Toast } from '@ant-design/react-native';
 
-import { useState } from 'react';
 
 
 const initDB = async(db) => {
@@ -23,9 +22,10 @@ const initDB = async(db) => {
         LastName TEXT,
         Organization TEXT,
         Position TEXT,
+        ContractNo TEXT,
         EmailAddress TEXT UNIQUE,
         Password TEXT,
-        AutorityLv INTEGER
+        AuthorityLv INTEGER
       );
       CREATE TABLE IF NOT EXISTS DrillReport (
         RefID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,13 +77,13 @@ const initDB = async(db) => {
         Options TEXT
       );
     `);
-    console.log('creat tables in SQlite !');
+    console.log('Creat tables in SQlite !');
   } catch (error) {
     console.log('Error :', error, ' !');
   }
 };
 
-const Stack = createStackNavigator();
+//const Stack = createStackNavigator();
 
 const Drawer = createDrawerNavigator();
 
@@ -91,7 +91,7 @@ export default function App() {
   return (
     <SQLiteProvider databaseName = 'report.db' onInit = {initDB}>
       <NavigationContainer>
-        <Drawer.Navigator initialRouteName='Home'>
+        <Drawer.Navigator initialRouteName='SignIn'>
           <Drawer.Screen name = 'SignIn' component={SignInScreen}/>
           <Drawer.Screen name = 'SignUp' component={SignUpScreen}/>
           <Drawer.Screen name = 'Home' component={HomeScreen}/>
@@ -108,6 +108,35 @@ export default function App() {
 
 
 const SignInScreen = ({navigation}) => {
+  const db = useSQLiteContext();
+  const [accountEmail, setAccountEmail] = useState('');
+  const [accountPassword, setAccountPassword] = useState('');
+
+  const handleSignIn = async() => {
+    if(accountEmail.length === 0 || accountPassword.length === 0) {
+        Alert.alert('Attention','Please enter both emila and password');
+        return;
+    }
+    try {
+        const user = await db.getFirstAsync('SELECT * FROM Account WHERE EmailAddress = ?', [accountEmail]);
+        if (!user) {
+            Alert.alert('Error', 'Email does not exist !');
+            return;
+        }
+        const validUser = await db.getFirstAsync('SELECT * FROM users WHERE EmailAddress = ? AND Password = ?', [accountEmail, accountPassword]);
+        if(validUser) {
+            Alert.alert('Success', 'Sign in successful');
+            navigation.navigate('Home', {user:userName});
+            setUserName('');
+            setPassword('');
+        } else {
+            Alert.alert('Error', 'Incorrect password');
+        }
+    } catch (error) {
+        console.log('Error during login : ', error);
+    }
+}
+
   return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
@@ -151,19 +180,21 @@ const SignUpScreen = ({navigation}) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [organization, setOrganization] = useState('Stark Industries');
   const [position, setPosition] = useState('EMPLOYEE');
-  const [autorityLv, setAutorityLv] = useState('3');
+  const [contractNo, setContractNo] = useState('CW9999999_2024');
+  const [authorityLv, setAuthorityLv] = useState('6');
 
-  /*
+  
   const handleSignUp = async() => {
     if (firstName.length === 0 || lastName.length === 0 
       || organization.length === 0 || emailAddress.length === 0 
       || password === 0 || confirmPassword === 0)
     {
-      Alert.alert('First and last name, organization, email address, password and confirmpassword can not be null!');
+      Alert.alert('Attention!','First and last name, organization, email address, password and confirmpassword can not be null!');
       return;
     }
     if (confirmPassword !== password) {
-      Alert.alert('Password do not match!')
+      Alert.alert('Error','Password do not match!');
+      return;
     }
     try {
       const existingUser = await db.getFirstAsync('SELECT * FROM Account where EmailAddress = ?', [emailAddress]);
@@ -171,10 +202,15 @@ const SignUpScreen = ({navigation}) => {
         Alert.alert('This email address has alredy been used.');
         return;
       }
-      await db.runAsync('INSERT INTO Account (FirstName, MiddleName, LastName, Organization, Position, ContractNo, EmailAddress, Password, AuthorityLv) VALUES ('Luke', NULL, 'Yu', 'EarthSQL', 'Developer', '0000000000', 'luke.yu@earthsql.com', '123456', '6');')
+      await db.runAsync('INSERT INTO Account (FirstName, MiddleName, LastName, Organization, Position, EmailAddress, Password, ContractNo, AuthorityLv) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [firstName, middleName, lastName, organization, position, emailAddress, password, contractNo, authorityLv]);
+        console.log('New Account added in SQlite');
+        Alert.alert('Success', 'Registration successful!')
+        navigation.navigate('Home', {user : firstName});
+    } catch (error) {
+      console.log('Error during registration:', error);
     }
-
-  }*/
+  }
 
   return (
     <View style = {styles.container}>
@@ -234,7 +270,7 @@ const SignUpScreen = ({navigation}) => {
       />
       <Pressable 
         style = {styles.button} 
-        onPress = {() => navigation.navigate('Home')}
+        onPress = {handleSignUp}
       >
         <Text style = {styles.buttonText}>Sign up</Text>
       </Pressable>
@@ -249,11 +285,14 @@ const SignUpScreen = ({navigation}) => {
 }
 
 const HomeScreen = ({navigation}) => {
+  const { user } = route.params;
+
   return (
     <View style = {styles.container}>
       <Text style = {styles.home_title}>
         Welcome to Daily Report Collector!
       </Text>
+      <Text style={styles.home_title}>G' day { user }.</Text>
       <Pressable 
         style = {styles.button} 
         onPress = {() => navigation.navigate('SignIn')}
