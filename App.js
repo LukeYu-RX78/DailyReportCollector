@@ -4,304 +4,248 @@ import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack'; 
 import { createDrawerNavigator } from '@react-navigation/drawer';
-
 import React, { useState, useEffect, Component } from 'react';
-import { AppRegistry } from 'react-native';
-import { Button, Provider, Toast } from '@ant-design/react-native';
 
-
-
+//initialize the database
 const initDB = async(db) => {
-  try {
-    await db.execAsync(`
-      PRAGMA journal_mode = WAL;
-      CREATE TABLE IF NOT EXISTS Account (
-        UID INTEGER PRIMARY KEY AUTOINCREMENT,
-        FirstName TEXT,
-        MiddleName TEXT,
-        LastName TEXT,
-        Organization TEXT,
-        Position TEXT,
-        ContractNo TEXT,
-        EmailAddress TEXT UNIQUE,
-        Password TEXT,
-        AuthorityLv INTEGER
-      );
-      CREATE TABLE IF NOT EXISTS DrillReport (
-        RefID INTEGER PRIMARY KEY AUTOINCREMENT,
-        UID INTEGER,
-        ContractNo TEXT,
-        Client TEXT,
-        RigID TEXT,
-        Department TEXT,
-        Date TEXT,
-        Shift TEXT,
-        Day TEXT,
-        DayType TEXT,
-        MachineHrsFrom REAL,
-        MachineHrsTo REAL,
-        Location TEXT,
-        TotalMetres REAL,
-        DrillingHrs REAL,
-        [Metres/DrillingHr] REAL,
-        TotalActivityHrs REAL,
-        [Metres/TotalHr] REAL,
-        Comments TEXT,
-        ReportState INTEGER
-      );
-      CREATE TABLE IF NOT EXISTS Drilling (
-        DID INTEGER PRIMARY KEY AUTOINCREMENT,
-        RefID INTEGER,
-        HoleID TEXT,
-        Angle REAL,
-        DrillType TEXT,
-        Size TEXT,
-        [From] REAL,
-        [To] REAL,
-        TotalMetres REAL,
-        Barrel TEXT,
-        RecovMetres REAL,
-        DCIMetres REAL,
-        [N/CMetres] REAL
-      );
-      CREATE TABLE IF NOT EXISTS AziAligner (
-        AziID INTEGER PRIMARY KEY AUTOINCREMENT,
-        RefID INTEGER,
-        HoleID TEXT,
-        Dip REAL,
-        Azimuth REAL
-      );
-      CREATE TABLE IF NOT EXISTS LookupList (
-        ContractNo TEXT,
-        Attribute TEXT,
-        Options TEXT
-      );
-    `);
-    console.log('Creat tables in SQlite !');
-  } catch (error) {
-    console.log('Error :', error, ' !');
-  }
+    try {
+        await db.execAsync(`
+            PRAGMA journal_mode = WAL;
+            CREATE TABLE IF NOT EXISTS Account (
+            UID INTEGER PRIMARY KEY AUTOINCREMENT,
+              FirstName TEXT,
+              MiddleName TEXT,
+              LastName TEXT,
+              Organization TEXT,
+              Position TEXT,
+              ContractNo TEXT,
+              EmailAddress TEXT UNIQUE,
+              Password TEXT,
+              AuthorityLv INTEGER
+             );
+            CREATE TABLE IF NOT EXISTS DrillReport (
+              RefID INTEGER PRIMARY KEY AUTOINCREMENT,
+              UID INTEGER,
+              ContractNo TEXT,
+              Client TEXT,
+              RigID TEXT,
+              Department TEXT,
+              Date TEXT,
+              Shift TEXT,
+              Day TEXT,
+              DayType TEXT,
+              MachineHrsFrom REAL,
+              MachineHrsTo REAL,
+              Location TEXT,
+              TotalMetres REAL,
+              DrillingHrs REAL,
+              [Metres/DrillingHr] REAL,
+              TotalActivityHrs REAL,
+              [Metres/TotalHr] REAL,
+              Comments TEXT,
+              ReportState INTEGER
+            );
+            CREATE TABLE IF NOT EXISTS Drilling (
+              DID INTEGER PRIMARY KEY AUTOINCREMENT,
+              RefID INTEGER,
+              HoleID TEXT,
+              Angle REAL,
+              DrillType TEXT,
+              Size TEXT,
+              [From] REAL,
+              [To] REAL,
+              TotalMetres REAL,
+              Barrel TEXT,
+              RecovMetres REAL,
+              DCIMetres REAL,
+              [N/CMetres] REAL
+            );
+            CREATE TABLE IF NOT EXISTS AziAligner (
+              AziID INTEGER PRIMARY KEY AUTOINCREMENT,
+              RefID INTEGER,
+              HoleID TEXT,
+              Dip REAL,
+              Azimuth REAL
+            );
+            CREATE TABLE IF NOT EXISTS LookupList (
+              ContractNo TEXT,
+              Attribute TEXT,
+              Options TEXT
+            );
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT UNIQUE,
+                password TEXT
+            );
+        `);
+        console.log('Database initialized !');
+    } catch (error) {
+        console.log('Error while initializing the database : ', error);
+    }
 };
 
-//const Stack = createStackNavigator();
 
+const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
+
+
 
 export default function App() {
   return (
-    <SQLiteProvider databaseName = 'report.db' onInit = {initDB}>
-      <NavigationContainer>
-        <Drawer.Navigator initialRouteName='SignIn'>
-          <Drawer.Screen name = 'SignIn' component={SignInScreen}/>
-          <Drawer.Screen name = 'SignUp' component={SignUpScreen}/>
-          <Drawer.Screen name = 'Home' component={HomeScreen}/>
-          <Drawer.Screen name = 'AllReports' component={ReportsScreen}/>
-          <Drawer.Screen name = 'ReportFroms' component={FormsScreen}/>
-          <Drawer.Screen name = 'NewReport' component={NewReportScreen}/>
-          <Drawer.Screen name = 'EditForm' component={EditFormScreen}/>
-          <Drawer.Screen name = 'UserInfo' component={UserScreen}/>
-        </Drawer.Navigator>
-      </NavigationContainer>
+    <SQLiteProvider databaseName='report.db' onInit={initDB}>
+        <NavigationContainer>
+            <Drawer.Navigator initialRouteName='Login'>
+                <Drawer.Screen name='Login' component={LoginScreen}/>
+                <Drawer.Screen name='Register' component={RegisterScreen}/>
+                <Drawer.Screen name='Home' component={HomeScreen}/>
+                <Drawer.Screen name = 'AllReports' component={ReportsScreen}/>
+                <Drawer.Screen name = 'ReportFroms' component={FormsScreen}/>
+                <Drawer.Screen name = 'NewReport' component={NewReportScreen}/>
+                <Drawer.Screen name = 'EditForm' component={EditFormScreen}/>
+                <Drawer.Screen name = 'UserInfo' component={UserScreen}/>
+            </Drawer.Navigator>
+        </NavigationContainer>
     </SQLiteProvider>
   );
-};
+}
 
+const LoginScreen = ({navigation}) => {
 
-const SignInScreen = ({navigation}) => {
-  const db = useSQLiteContext();
-  const [accountEmail, setAccountEmail] = useState('');
-  const [accountPassword, setAccountPassword] = useState('');
+    const db = useSQLiteContext();
+    const [userName, setUserName] = useState('');
+    const [password, setPassword] = useState('');
 
-  const handleSignIn = async() => {
-    if(accountEmail.length === 0 || accountPassword.length === 0) {
-        Alert.alert('Attention','Please enter both emila and password');
-        return;
-    }
-    try {
-        const user = await db.getFirstAsync('SELECT * FROM Account WHERE EmailAddress = ?', [accountEmail]);
-        if (!user) {
-            Alert.alert('Error', 'Email does not exist !');
+    //function to handle login logic
+    const handleLogin = async() => {
+        if(userName.length === 0 || password.length === 0) {
+            Alert.alert('Attention','Please enter both username and password');
             return;
         }
-        const validUser = await db.getFirstAsync('SELECT * FROM users WHERE EmailAddress = ? AND Password = ?', [accountEmail, accountPassword]);
-        if(validUser) {
-            Alert.alert('Success', 'Sign in successful');
-            navigation.navigate('Home', {user:userName});
-            setUserName('');
-            setPassword('');
-        } else {
-            Alert.alert('Error', 'Incorrect password');
+        try {
+            const user = await db.getFirstAsync('SELECT * FROM users WHERE username = ?', [userName]);
+            if (!user) {
+                Alert.alert('Error', 'Username does not exist !');
+                return;
+            }
+            const validUser = await db.getFirstAsync('SELECT * FROM users WHERE username = ? AND password = ?', [userName, password]);
+            if(validUser) {
+                Alert.alert('Success', 'Login successful');
+                navigation.navigate('Home', {user:userName});
+                setUserName('');
+                setPassword('');
+            } else {
+                Alert.alert('Error', 'Incorrect password');
+            }
+        } catch (error) {
+            console.log('Error during login : ', error);
         }
-    } catch (error) {
-        console.log('Error during login : ', error);
     }
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>Login</Text>
+            <TextInput 
+                style={styles.input}
+                placeholder='Username'
+                value={userName}
+                onChangeText={setUserName}
+            />
+            <TextInput 
+                style={styles.input}
+                placeholder='Password'
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+            />
+            <Pressable style={styles.button} onPress={handleLogin}>
+                <Text style={styles.buttonText} >Login</Text>
+            </Pressable>
+            <Pressable style={styles.link} onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.linkText}>Don't have an account? Register</Text>
+            </Pressable>
+        </View>
+    )
 }
 
-  return (
-    <View style = {styles.container}>
-      <Text style = {styles.title}>
-        Sign In Page
-      </Text>
-      <TextInput 
-        style = {styles.input}
-        placeholder='Please enter your email'
-      />
-      <TextInput 
-        style = {styles.input}
-        placeholder='Please enter your password'
-        secureTextEntry
-      />
-      <Pressable 
-        style = {styles.button} 
-        onPress = {() => navigation.navigate('Home')}
-      >
-        <Text style = {styles.buttonText}>Sign in</Text>
-      </Pressable>
-      <Pressable 
-        style = {styles.link}
-        onPress = {() => navigation.navigate('SignUp')}
-      >
-        <Text style = {styles.linkText}>Don't have an Account? Sign up</Text>
-      </Pressable>
-    </View>
-  )
+
+const RegisterScreen = ({navigation}) => {
+
+    const db = useSQLiteContext();
+    const [userName, setUserName] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+
+    const handleRegister = async() => {
+        if  (userName.length === 0 || password.length === 0 || confirmPassword.length === 0) {
+            Alert.alert('Attention!', 'Please enter all the fields.');
+            return;
+        }
+        if (password !== confirmPassword) {
+            Alert.alert('Error', 'Password do not match');
+            return;
+        }
+        try {
+            const existingUser = await db.getFirstAsync('SELECT * FROM users WHERE username = ?', [userName]);
+            if (existingUser) {
+                Alert.alert('Error', 'Username already exists.');
+                return;
+            }
+
+            await db.runAsync('INSERT INTO users (username, password) VALUES (?, ?)', [userName, password]);
+            Alert.alert('Success', 'Registration successful!');
+            navigation.navigate('Home', {user : userName});
+        } catch (error) {
+            console.log('Error during registration : ', error);
+        }
+    }
+
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>Register</Text>
+            <TextInput 
+                style={styles.input}
+                placeholder='Username'
+                value={userName}
+                onChangeText={setUserName}
+            />
+            <TextInput 
+                style={styles.input}
+                placeholder='Password'
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+            />
+            <TextInput 
+                style={styles.input}
+                placeholder='Confirm password'
+                secureTextEntry
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+            />
+            <Pressable style={styles.button} onPress={handleRegister}>
+                <Text style={styles.buttonText} >Register</Text>
+            </Pressable>
+            <Pressable style={styles.link} onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.linkText}>Already have an account? Login</Text>
+            </Pressable>
+        </View>
+    )
 }
 
-const SignUpScreen = ({navigation}) => {
 
-  const db = useSQLiteContext();
+const HomeScreen = ({navigation, route}) => {
 
-
-  const [firstName, setFirstName] = useState('');
-  const [middleName, setMiddleName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [emailAddress, setEmailAddress] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [organization, setOrganization] = useState('Stark Industries');
-  const [position, setPosition] = useState('EMPLOYEE');
-  const [contractNo, setContractNo] = useState('CW9999999_2024');
-  const [authorityLv, setAuthorityLv] = useState('6');
-
-  
-  const handleSignUp = async() => {
-    if (firstName.length === 0 || lastName.length === 0 
-      || organization.length === 0 || emailAddress.length === 0 
-      || password === 0 || confirmPassword === 0)
-    {
-      Alert.alert('Attention!','First and last name, organization, email address, password and confirmpassword can not be null!');
-      return;
-    }
-    if (confirmPassword !== password) {
-      Alert.alert('Error','Password do not match!');
-      return;
-    }
-    try {
-      const existingUser = await db.getFirstAsync('SELECT * FROM Account where EmailAddress = ?', [emailAddress]);
-      if (existingUser) {
-        Alert.alert('This email address has alredy been used.');
-        return;
-      }
-      await db.runAsync('INSERT INTO Account (FirstName, MiddleName, LastName, Organization, Position, EmailAddress, Password, ContractNo, AuthorityLv) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [firstName, middleName, lastName, organization, position, emailAddress, password, contractNo, authorityLv]);
-        console.log('New Account added in SQlite');
-        Alert.alert('Success', 'Registration successful!')
-        navigation.navigate('Home', {user : firstName});
-    } catch (error) {
-      console.log('Error during registration:', error);
-    }
-  }
-
-  return (
-    <View style = {styles.container}>
-      <Text style = {styles.title}>
-        Sign Up Page
-      </Text>
-      <TextInput 
-        style = {styles.input}
-        placeholder ='First Name'
-        Value =  {firstName}
-        onChange={setFirstName}
-      />
-      <TextInput 
-        style = {styles.input}
-        placeholder ='Middle Name'
-        Value =  {middleName}
-        onChange={setMiddleName}
-      />
-      <TextInput 
-        style = {styles.input}
-        placeholder ='Last Name'
-        Value =  {lastName}
-        onChange={setLastName}
-      />
-      <TextInput 
-        style = {styles.input}
-        placeholder ='Email Address'
-        Value =  {emailAddress}
-        onChange={setEmailAddress}
-      />
-      <TextInput 
-        style = {styles.input}
-        placeholder ='Password'
-        secureTextEntry
-        Value =  {password}
-        onChange={setPassword}
-      />
-      <TextInput 
-        style = {styles.input}
-        placeholder ='Confirm password'
-        secureTextEntry
-        Value =  {confirmPassword}
-        onChange={setConfirmPassword}
-      />
-      <TextInput 
-        style = {styles.input}
-        placeholder ='Organization'
-        Value =  {organization}
-        onChange={setOrganization}
-      />
-      <TextInput 
-        style = {styles.input}
-        placeholder ='Position'
-        Value =  {position}
-        onChange={setPosition}
-
-      />
-      <Pressable 
-        style = {styles.button} 
-        onPress = {handleSignUp}
-      >
-        <Text style = {styles.buttonText}>Sign up</Text>
-      </Pressable>
-      <Pressable 
-        style = {styles.link}
-        onPress = {() => navigation.navigate('SignIn')}
-      >
-        <Text style = {styles.linkText}>Already have an account? Sign in</Text>
-      </Pressable>
-    </View>
-  )
+    const { user } = route?.params? route.params : 'Guest';
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>Home</Text>
+            <Text style={styles.userText}>Welcome {user} !</Text>
+            <Pressable style={styles.button} onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.buttonText} >Logout</Text>
+            </Pressable>
+        </View>
+    )
 }
 
-const HomeScreen = ({navigation}) => {
-  const { user } = route.params;
-
-  return (
-    <View style = {styles.container}>
-      <Text style = {styles.home_title}>
-        Welcome to Daily Report Collector!
-      </Text>
-      <Text style={styles.home_title}>G' day { user }.</Text>
-      <Pressable 
-        style = {styles.button} 
-        onPress = {() => navigation.navigate('SignIn')}
-      >
-        <Text style = {styles.buttonText}>Sign Out</Text>
-      </Pressable>
-    </View>
-  )
-}
 
 const ReportsScreen = ({navigation}) => {
   return (
@@ -329,11 +273,6 @@ const NewReportScreen = ({navigation}) => {
       <Text style = {styles.title}>
         Create New Report
       </Text>
-      <Provider>
-        <Button onPress={() => Toast.info('This is a toast tips')}>
-          Start
-        </Button>
-      </Provider>
     </View>
   )
 }
@@ -357,6 +296,7 @@ const UserScreen = ({navigation}) => {
     </View>
   )
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -369,16 +309,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 30,
   },
-  home_title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 64,
-  },
   input: {
     width: '80%',
     padding: 10,
     borderWidth: 1,
-    borderColor: '#CCC',
+    borderColor: '#ccc',
     marginVertical: 5,
   },
   button: {
@@ -393,10 +328,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 18,
   },
-  link: {
+  link : {
     marginTop: 10,
   },
   linkText: {
     color: 'blue',
+  },
+  userText: {
+    fontSize: 18,
+    marginBottom: 30,
   }
 });
