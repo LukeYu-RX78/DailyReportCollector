@@ -1,10 +1,10 @@
-import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, FlatList, View, TextInput, Pressable, Button, Alert } from 'react-native';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack'; 
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import React, { useState, useEffect, Component } from 'react';
+import DropDownPicker from "react-native-dropdown-picker";
 
 
 //initialize the database
@@ -339,6 +339,7 @@ const NewReportScreen = ({navigation}) => {
     const db = useSQLiteContext();
     const currentDate = new Date();
     const [refid, setRefid] = useState('');
+    const [client, setClient] = useState('MMG Rosebery');
     const [contractno, setContractno] = useState('CW2262484_2024');
     const [rigid, setRigid] = useState('');
     const [department, setDepartment] = useState('');
@@ -352,6 +353,35 @@ const NewReportScreen = ({navigation}) => {
     const [comments, setComments] = useState('');
     const [reportstate, setReportstate] = useState(-1);
 
+    const [isRigNoOpen, setIsRigNoOpen] = useState(false);
+    const [isDepOpen, setIsDepOpen] = useState(false);
+    const [isDayTypeOpen, setIsDayTypeOpen] = useState(false);
+
+    const dayTypeItems = [
+        {label: 'A', value: 'A'},
+        {label: 'B', value: 'B'},
+        {label: 'C', value: 'C'},
+    ];
+
+    const departmentItems = [
+        {label: 'AR', value: 'AR'},
+        {label: 'DE', value: 'DE'},
+        {label: 'DEL', value: 'DEL'},
+        {label: 'EXP', value: 'EXP'},
+        {label: 'GC', value: 'GC'},
+        {label: 'GT', value: 'GT'},
+        {label: 'M', value: 'M'},
+        {label: 'MX', value: 'MX'},
+        {label: 'RD', value: 'RD'},
+    ]
+    const RigNoItems = [
+        {label: 'TLUR01', value: 'TLUR01'},
+        {label: 'TLUR02', value: 'TLUR02'},
+        {label: 'TLUR03', value: 'TLUR03'},
+        {label: 'TLUR09', value: 'TLUR09'},
+        {label: 'TLUR11', value: 'TLUR11'},
+    ]
+
     const handleSubmit = async () => {
         console.log('submit:');
         console.log(`rigno: ${rigid}; department: ${department}; date: ${date}; shift: ${shift};
@@ -364,30 +394,45 @@ const NewReportScreen = ({navigation}) => {
       <Text style = {styles.title}>
         Create New Report
       </Text>
-        <TextInput
-            style={styles.input}
-            placeholder='Rig No'
-            value={rigid}
-            onChangeText={setRigid}
-        />
-        <TextInput
-            style={styles.input}
-            placeholder='Department'
-            value={department}
-            onChangeText={setDepartment}
-        />
+        <View style={[styles.dropdownContainer, { zIndex: 10 }]}>
+            <DropDownPicker
+                style={styles.picker}
+                items={RigNoItems}
+                placeholder='Rig No'
+                open={isRigNoOpen}
+                setOpen={()=>setIsRigNoOpen(!isRigNoOpen)}
+                value={rigid}
+                setValue={(val)=>setRigid(val)}
+            />
+        </View>
+        <View style={[styles.dropdownContainer, { zIndex: 9 }]}>
+            <DropDownPicker
+                style={styles.picker}
+                items={departmentItems}
+                placeholder='Department'
+                open={isDepOpen}
+                setOpen={()=>setIsDepOpen(!isDepOpen)}
+                value={department}
+                setValue={(val)=>setDepartment(val)}
+            />
+        </View>
         <TextInput
             style={styles.input}
             placeholder='Shift'
             value={shift}
             onChangeText={setShift}
         />
-        <TextInput
-            style={styles.input}
-            placeholder='Day Type'
-            value={daytype}
-            onChangeText={setDaytype}
-        />
+        <View style={[styles.dropdownContainer, { zIndex: 8 }]}>
+            <DropDownPicker
+                style={styles.picker}
+                items={dayTypeItems}
+                placeholder='Day Type'
+                open={isDayTypeOpen}
+                setOpen={()=>setIsDayTypeOpen(!isDayTypeOpen)}
+                value={daytype}
+                setValue={(val)=>setDaytype(val)}
+            />
+        </View>
         <TextInput
             style={styles.input}
             placeholder='Machine Hrs From'
@@ -427,6 +472,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  dropdownContainer: {
+    width: '80%',
+  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -436,7 +484,14 @@ const styles = StyleSheet.create({
     width: '80%',
     padding: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#000',
+    borderRadius: 8,
+    marginVertical: 5,
+  },
+  picker: {
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#000',
     marginVertical: 5,
   },
   button: {
