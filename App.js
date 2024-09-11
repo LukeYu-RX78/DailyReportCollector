@@ -78,9 +78,9 @@ export default function App() {
                 <Drawer.Screen name='Login' component={LoginScreen}/>
                 <Drawer.Screen name='Register' component={RegisterScreen}/>
                 <Drawer.Screen name='Home' component={HomeScreen}/>
-                <Drawer.Screen name = 'Local Reports' component={FormsScreen}/>
+                <Drawer.Screen name = 'Local Reports' component={LocalReportsScreen}/>
                 <Drawer.Screen name = 'All Reports' component={AzureReportsScreen}/>
-                <Drawer.Screen name = 'NewReport' component={NewReportScreen}/>
+                <Drawer.Screen name = 'New Report' component={NewReportScreen}/>
             </Drawer.Navigator>
         </NavigationContainer>
     </SQLiteProvider>
@@ -324,21 +324,43 @@ const AzureReportsScreen = ({navigation}) => {
   );
 }
 
-const FormsScreen = ({navigation}) => {
-  return (
-    <View style = {styles.container}>
-      <Text style = {styles.title}>
-        View Report Forms
-      </Text>
-    </View>
-  )
+const LocalReportsScreen = ({navigation}) => {
+    const db = useSQLiteContext();
+
+    const fetchReport =  async() => {
+        try {
+            const report = await db.getFirstAsync('SELECT * FROM drill_report');
+            if (!report) {
+                console.log('Error, Reports does not exist !');
+                return;
+            } else {
+                console.log(report);
+                Alert.alert('Local Reports:', JSON.stringify(report));
+            }
+        } catch (error) {
+            console.log('Error during fetch local reports : ', error);
+        }
+    }
+
+
+    return (
+        <View style={styles.container}>
+            <Text style={styles.title}>
+                View Local Reports
+            </Text>
+            <Pressable style={styles.button} onPress={() => fetchReport()}>
+                <Text style={styles.buttonText} >Check Report</Text>
+            </Pressable>
+        </View>
+    )
 }
 
 
 const NewReportScreen = ({navigation}) => {
-    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const db = useSQLiteContext();
     const currentDate = new Date();
+
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const client = 'MMG Rosebery';
     const contractno = 'CW2262484_2024';
     const date = `${currentDate.getFullYear()}/${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
@@ -391,10 +413,38 @@ const NewReportScreen = ({navigation}) => {
     const handleSubmit = async () => {
         const refid = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}
         ${String(currentDate.getDate()).padStart(2, '0')}_${shift}_${rigid}`;
-        Alert.alert('Submit:',`refid: ${refid}; client: ${client}; contractno: ${contractno}; 
+
+        console.log('Submit content:');
+        console.log('Submit:',`refid: ${refid}; client: ${client}; contractno: ${contractno}; 
         rigno: ${rigid}; department: ${department}; date: ${date}; shift: ${shift};
         day: ${day}; daytype: ${daytype}; machinehrsfrom: ${machinehrsfrom}; machinehrsto: ${machinehrsto};
         location: ${location}; comments: ${comments}; reportsate: ${reportstate}`);
+
+        /*
+        * CREATE TABLE IF NOT EXISTS drill_report (
+              refid TEXT,
+              contractno TEXT,
+              client TEXT,
+              rigid TEXT,
+              department TEXT,
+              date TEXT,
+              shift TEXT,
+              day TEXT,
+              daytype TEXT,
+              machinehrsfrom TEXT,
+              machinehrsto TEXT,
+              location TEXT,
+              comments TEXT,
+              reportstate INTEGER
+            );*/
+
+        try {
+            await db.runAsync('INSERT INTO drill_report (refid, contractno, client, rigid, department, date, shift, day, daytype, machinehrsfrom, machinehrsto, location, comments, reportstate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                [refid, contractno, client, rigid, department, date, shift, day, daytype, machinehrsfrom, machinehrsto, location, comments, reportstate]);
+            Alert.alert('Success', 'Store report successful!');
+        } catch (error) {
+            console.log('Error during registration : ', error);
+        }
     }
 
     return (
