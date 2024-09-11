@@ -20,7 +20,7 @@ const initDB = async(db) => {
               authoritylevel INTEGER
              );
             CREATE TABLE IF NOT EXISTS drill_report (
-              refid INTEGER,
+              refid TEXT,
               contractno TEXT,
               client TEXT,
               rigid TEXT,
@@ -29,8 +29,8 @@ const initDB = async(db) => {
               shift TEXT,
               day TEXT,
               daytype TEXT,
-              machinehrsfrom REAL,
-              machinehrsto REAL,
+              machinehrsfrom TEXT,
+              machinehrsto TEXT,
               location TEXT,
               comments TEXT,
               reportstate INTEGER
@@ -77,8 +77,8 @@ export default function App() {
                 <Drawer.Screen name='Login' component={LoginScreen}/>
                 <Drawer.Screen name='Register' component={RegisterScreen}/>
                 <Drawer.Screen name='Home' component={HomeScreen}/>
+                <Drawer.Screen name = 'Local Reports' component={FormsScreen}/>
                 <Drawer.Screen name = 'All Reports' component={AzureReportsScreen}/>
-                <Drawer.Screen name = 'ReportFroms' component={FormsScreen}/>
                 <Drawer.Screen name = 'NewReport' component={NewReportScreen}/>
             </Drawer.Navigator>
         </NavigationContainer>
@@ -333,33 +333,90 @@ const FormsScreen = ({navigation}) => {
   )
 }
 
+
 const NewReportScreen = ({navigation}) => {
-  return (
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const db = useSQLiteContext();
+    const currentDate = new Date();
+    const [refid, setRefid] = useState('');
+    const [contractno, setContractno] = useState('CW2262484_2024');
+    const [rigid, setRigid] = useState('');
+    const [department, setDepartment] = useState('');
+    const [date, setDate] = useState(`${currentDate.getFullYear()}/${currentDate.getMonth() + 1}/${currentDate.getDate()}`);
+    const [shift, setShift] = useState('');
+    const [day, setDay] = useState(daysOfWeek[currentDate.getDay()]);
+    const [daytype, setDaytype] = useState('');
+    const [machinehrsfrom, setMachinehrsfrom] = useState('');
+    const [machinehrsto, setMachinehrsto] = useState('');
+    const [location, setLocation] = useState('');
+    const [comments, setComments] = useState('');
+    const [reportstate, setReportstate] = useState(-1);
+
+    const handleSubmit = async () => {
+        console.log('submit:');
+        console.log(`rigno: ${rigid}; department: ${department}; date: ${date}; shift: ${shift};
+        day: ${day}; daytype: ${daytype}; machinehrsfrom: ${machinehrsfrom}; machinehrsto: ${machinehrsto};
+        location: ${location}; comments: ${comments}`);
+    }
+
+    return (
     <View style = {styles.container}>
       <Text style = {styles.title}>
         Create New Report
       </Text>
+        <TextInput
+            style={styles.input}
+            placeholder='Rig No'
+            value={rigid}
+            onChangeText={setRigid}
+        />
+        <TextInput
+            style={styles.input}
+            placeholder='Department'
+            value={department}
+            onChangeText={setDepartment}
+        />
+        <TextInput
+            style={styles.input}
+            placeholder='Shift'
+            value={shift}
+            onChangeText={setShift}
+        />
+        <TextInput
+            style={styles.input}
+            placeholder='Day Type'
+            value={daytype}
+            onChangeText={setDaytype}
+        />
+        <TextInput
+            style={styles.input}
+            placeholder='Machine Hrs From'
+            value={machinehrsfrom}
+            onChangeText={setMachinehrsfrom}
+        />
+        <TextInput
+            style={styles.input}
+            placeholder='Machine Hrs To'
+            value={machinehrsto}
+            onChangeText={setMachinehrsto}
+        />
+        <TextInput
+            style={styles.input}
+            placeholder='Location'
+            value={location}
+            onChangeText={setLocation}
+        />
+        <TextInput
+            style={styles.input}
+            placeholder='Comments'
+            value={comments}
+            onChangeText={setComments}
+        />
+        <Pressable style={styles.button} onPress={handleSubmit}>
+            <Text style={styles.buttonText} >Submit</Text>
+        </Pressable>
     </View>
-  )
-}
 
-const EditFormScreen = ({navigation}) => {
-  return (
-    <View style = {styles.container}>
-      <Text style = {styles.title}>
-        Edit From Data
-      </Text>
-    </View>
-  )
-}
-
-const UserScreen = ({navigation}) => {
-  return (
-    <View style = {styles.container}>
-      <Text style = {styles.title}>
-        View User Info
-      </Text>
-    </View>
   )
 }
 
