@@ -11,17 +11,12 @@ const initDB = async(db) => {
     try {
         await db.execAsync(`
             PRAGMA journal_mode = WAL;
-            CREATE TABLE IF NOT EXISTS Account (
-            UID INTEGER PRIMARY KEY AUTOINCREMENT,
-              FirstName TEXT,
-              MiddleName TEXT,
-              LastName TEXT,
-              Organization TEXT,
-              Position TEXT,
-              ContractNo TEXT,
-              EmailAddress TEXT UNIQUE,
-              Password TEXT,
-              AuthorityLv INTEGER
+            CREATE TABLE IF NOT EXISTS account (
+              uid INTEGER PRIMARY KEY AUTOINCREMENT,
+              emailaddress TEXT UNIQUE,
+              username TEXT,
+              password TEXT,
+              authoritylevel INTEGER
              );
             CREATE TABLE IF NOT EXISTS DrillReport (
               RefID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,11 +67,6 @@ const initDB = async(db) => {
               Attribute TEXT,
               Options TEXT
             );
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE,
-                password TEXT
-            );
         `);
         console.log('Database initialized !');
     } catch (error) {
@@ -112,25 +102,28 @@ export default function App() {
 const LoginScreen = ({navigation}) => {
 
     const db = useSQLiteContext();
+    const [email, setEmail] = useState('');
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
 
     //function to handle login logic
     const handleLogin = async() => {
-        if(userName.length === 0 || password.length === 0) {
-            Alert.alert('Attention','Please enter both username and password');
+        if(email.length === 0 || password.length === 0) {
+            Alert.alert('Attention','Please enter email and password');
             return;
         }
         try {
-            const user = await db.getFirstAsync('SELECT * FROM users WHERE username = ?', [userName]);
+            const user = await db.getFirstAsync('SELECT * FROM account WHERE emailaddress = ?', [email]);
             if (!user) {
-                Alert.alert('Error', 'Username does not exist !');
+                Alert.alert('Error', 'Account does not exist !');
                 return;
             }
-            const validUser = await db.getFirstAsync('SELECT * FROM users WHERE username = ? AND password = ?', [userName, password]);
+            const validUser = await db.getFirstAsync('SELECT * FROM account WHERE emailaddress = ? AND password = ?', [email, password]);
             if(validUser) {
+                console.log(validUser);
                 Alert.alert('Success', 'Login successful');
-                navigation.navigate('Home', {user:userName});
+                navigation.navigate('Home', {user:email});
+                setEmail('');
                 setUserName('');
                 setPassword('');
             } else {
@@ -145,9 +138,9 @@ const LoginScreen = ({navigation}) => {
             <Text style={styles.title}>Login</Text>
             <TextInput 
                 style={styles.input}
-                placeholder='Username'
-                value={userName}
-                onChangeText={setUserName}
+                placeholder='Email'
+                value={email}
+                onChangeText={setEmail}
             />
             <TextInput 
                 style={styles.input}
@@ -170,12 +163,14 @@ const LoginScreen = ({navigation}) => {
 const RegisterScreen = ({navigation}) => {
 
     const db = useSQLiteContext();
+    const [email, setEmail] = useState('');
     const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [authority, setAuthority] = useState(0);
 
     const handleRegister = async() => {
-        if  (userName.length === 0 || password.length === 0 || confirmPassword.length === 0) {
+        if  (email.length === 0 || userName.length === 0 || password.length === 0 || confirmPassword.length === 0) {
             Alert.alert('Attention!', 'Please enter all the fields.');
             return;
         }
@@ -184,15 +179,15 @@ const RegisterScreen = ({navigation}) => {
             return;
         }
         try {
-            const existingUser = await db.getFirstAsync('SELECT * FROM users WHERE username = ?', [userName]);
+            const existingUser = await db.getFirstAsync('SELECT * FROM account WHERE emailaddress = ?', [email]);
             if (existingUser) {
-                Alert.alert('Error', 'Username already exists.');
+                Alert.alert('Error', 'Email already been used.');
                 return;
             }
 
-            await db.runAsync('INSERT INTO users (username, password) VALUES (?, ?)', [userName, password]);
+            await db.runAsync('INSERT INTO account (emailaddress, username, password, authoritylevel) VALUES (?, ?, ?, ?)', [email, userName, password, authority]);
             Alert.alert('Success', 'Registration successful!');
-            navigation.navigate('Home', {user : userName});
+            navigation.navigate('Home', {user : email});
         } catch (error) {
             console.log('Error during registration : ', error);
         }
@@ -201,6 +196,12 @@ const RegisterScreen = ({navigation}) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Register</Text>
+            <TextInput 
+                style={styles.input}
+                placeholder='Email Address'
+                value={email}
+                onChangeText={setEmail}
+            />
             <TextInput 
                 style={styles.input}
                 placeholder='Username'
