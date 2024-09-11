@@ -3,8 +3,9 @@ import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack'; 
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import React, { useState, useEffect, Component } from 'react';
+import React, { useState, useEffect, useMemo, Component } from 'react';
 import DropDownPicker from "react-native-dropdown-picker";
+import RadioGroup from "react-native-radio-buttons-group";
 
 
 //initialize the database
@@ -338,20 +339,20 @@ const NewReportScreen = ({navigation}) => {
     const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const db = useSQLiteContext();
     const currentDate = new Date();
-    const [refid, setRefid] = useState('');
-    const [client, setClient] = useState('MMG Rosebery');
-    const [contractno, setContractno] = useState('CW2262484_2024');
+    const client = 'MMG Rosebery';
+    const contractno = 'CW2262484_2024';
+    const date = `${currentDate.getFullYear()}/${currentDate.getMonth() + 1}/${currentDate.getDate()}`;
+    const day = daysOfWeek[currentDate.getDay()];
+    const reportstate = -1;
+
     const [rigid, setRigid] = useState('');
     const [department, setDepartment] = useState('');
-    const [date, setDate] = useState(`${currentDate.getFullYear()}/${currentDate.getMonth() + 1}/${currentDate.getDate()}`);
     const [shift, setShift] = useState('');
-    const [day, setDay] = useState(daysOfWeek[currentDate.getDay()]);
     const [daytype, setDaytype] = useState('');
     const [machinehrsfrom, setMachinehrsfrom] = useState('');
     const [machinehrsto, setMachinehrsto] = useState('');
     const [location, setLocation] = useState('');
     const [comments, setComments] = useState('');
-    const [reportstate, setReportstate] = useState(-1);
 
     const [isRigNoOpen, setIsRigNoOpen] = useState(false);
     const [isDepOpen, setIsDepOpen] = useState(false);
@@ -382,11 +383,18 @@ const NewReportScreen = ({navigation}) => {
         {label: 'TLUR11', value: 'TLUR11'},
     ]
 
+    const radioButtons = useMemo(() => ([
+        { id: 'Day', label: 'Day', value: 'Day'},
+        { id: 'Night', label: 'Night', value: 'Night'}
+    ]), []);
+
     const handleSubmit = async () => {
-        console.log('submit:');
-        console.log(`rigno: ${rigid}; department: ${department}; date: ${date}; shift: ${shift};
+        const refid = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}
+        ${String(currentDate.getDate()).padStart(2, '0')}_${shift}_${rigid}`;
+        Alert.alert('Submit:',`refid: ${refid}; client: ${client}; contractno: ${contractno}; 
+        rigno: ${rigid}; department: ${department}; date: ${date}; shift: ${shift};
         day: ${day}; daytype: ${daytype}; machinehrsfrom: ${machinehrsfrom}; machinehrsto: ${machinehrsto};
-        location: ${location}; comments: ${comments}`);
+        location: ${location}; comments: ${comments}; reportsate: ${reportstate}`);
     }
 
     return (
@@ -416,12 +424,10 @@ const NewReportScreen = ({navigation}) => {
                 setValue={(val)=>setDepartment(val)}
             />
         </View>
-        <TextInput
-            style={styles.input}
-            placeholder='Shift'
-            value={shift}
-            onChangeText={setShift}
-        />
+        <View style={styles.radioGroupContainer}>
+            <Text style={{marginTop: 7}}> Shift: </Text>
+            <RadioGroup layout={"row"}  radioButtons={radioButtons} onPress={setShift} selectedId={shift}/>
+        </View>
         <View style={[styles.dropdownContainer, { zIndex: 8 }]}>
             <DropDownPicker
                 style={styles.picker}
@@ -474,6 +480,9 @@ const styles = StyleSheet.create({
   },
   dropdownContainer: {
     width: '80%',
+  },
+  radioGroupContainer: {
+      flexDirection: 'row',
   },
   title: {
     fontSize: 24,
@@ -534,7 +543,6 @@ const styles = StyleSheet.create({
   },
   reportContainer: {
     flex: 1,
-    backgroundColor: '#D6E7BB',
     paddingVertical: 30,
     paddingHorizontal: 30,
   },
@@ -550,7 +558,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   header: {
-    backgroundColor: "#80C342",
+    backgroundColor: "#9F9F9F",
     flexDirection: 'row',
     justifyContent: 'space-between',
     padding: 10,
