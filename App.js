@@ -1,10 +1,11 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput, Pressable, Alert } from 'react-native';
+import { StyleSheet, Text, FlatList, View, TextInput, Pressable, Button, Alert } from 'react-native';
 import { SQLiteProvider, useSQLiteContext } from 'expo-sqlite';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack'; 
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import React, { useState, useEffect, Component } from 'react';
+
 
 //initialize the database
 const initDB = async(db) => {
@@ -18,54 +19,21 @@ const initDB = async(db) => {
               password TEXT,
               authoritylevel INTEGER
              );
-            CREATE TABLE IF NOT EXISTS DrillReport (
-              RefID INTEGER PRIMARY KEY AUTOINCREMENT,
-              UID INTEGER,
-              ContractNo TEXT,
-              Client TEXT,
-              RigID TEXT,
-              Department TEXT,
-              Date TEXT,
-              Shift TEXT,
-              Day TEXT,
-              DayType TEXT,
-              MachineHrsFrom REAL,
-              MachineHrsTo REAL,
-              Location TEXT,
-              TotalMetres REAL,
-              DrillingHrs REAL,
-              [Metres/DrillingHr] REAL,
-              TotalActivityHrs REAL,
-              [Metres/TotalHr] REAL,
-              Comments TEXT,
-              ReportState INTEGER
-            );
-            CREATE TABLE IF NOT EXISTS Drilling (
-              DID INTEGER PRIMARY KEY AUTOINCREMENT,
-              RefID INTEGER,
-              HoleID TEXT,
-              Angle REAL,
-              DrillType TEXT,
-              Size TEXT,
-              [From] REAL,
-              [To] REAL,
-              TotalMetres REAL,
-              Barrel TEXT,
-              RecovMetres REAL,
-              DCIMetres REAL,
-              [N/CMetres] REAL
-            );
-            CREATE TABLE IF NOT EXISTS AziAligner (
-              AziID INTEGER PRIMARY KEY AUTOINCREMENT,
-              RefID INTEGER,
-              HoleID TEXT,
-              Dip REAL,
-              Azimuth REAL
-            );
-            CREATE TABLE IF NOT EXISTS LookupList (
-              ContractNo TEXT,
-              Attribute TEXT,
-              Options TEXT
+            CREATE TABLE IF NOT EXISTS drill_report (
+              refid INTEGER,
+              contractno TEXT,
+              client TEXT,
+              rigid TEXT,
+              department TEXT,
+              date TEXT,
+              shift TEXT,
+              day TEXT,
+              daytype TEXT,
+              machinehrsfrom REAL,
+              machinehrsto REAL,
+              location TEXT,
+              comments TEXT,
+              reportstate INTEGER
             );
         `);
         console.log('Database initialized !');
@@ -74,11 +42,32 @@ const initDB = async(db) => {
     }
 };
 
+const AzureDBComm = async (sql) => {
+  fetch('https://samplevisualdemocorewebapi-fwf5ezc9akacfhg5.eastus-01.azurewebsites.net/api/SampleVisual/ExecuteSql', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: sql,
+  })
+    .then((response) => response.json())
+    .then((data) => {
+      if (data.Message) {
+        console.log(data.Message);
+        return data.Message;
+      } else {
+        console.log(data);
+        return data;
+      }
+    })
+    .catch((error) => {
+      console.error('Error:', error);
+      return error;
+    });
+};
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
-
-
 
 export default function App() {
   return (
@@ -88,11 +77,9 @@ export default function App() {
                 <Drawer.Screen name='Login' component={LoginScreen}/>
                 <Drawer.Screen name='Register' component={RegisterScreen}/>
                 <Drawer.Screen name='Home' component={HomeScreen}/>
-                <Drawer.Screen name = 'AllReports' component={ReportsScreen}/>
+                <Drawer.Screen name = 'All Reports' component={AzureReportsScreen}/>
                 <Drawer.Screen name = 'ReportFroms' component={FormsScreen}/>
                 <Drawer.Screen name = 'NewReport' component={NewReportScreen}/>
-                <Drawer.Screen name = 'EditForm' component={EditFormScreen}/>
-                <Drawer.Screen name = 'UserInfo' component={UserScreen}/>
             </Drawer.Navigator>
         </NavigationContainer>
     </SQLiteProvider>
@@ -100,12 +87,10 @@ export default function App() {
 }
 
 const LoginScreen = ({navigation}) => {
-
     const db = useSQLiteContext();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
 
-    //function to handle login logic
     const handleLogin = async() => {
         if(email.length === 0 || password.length === 0) {
             Alert.alert('Attention','Please enter email and password');
@@ -132,6 +117,7 @@ const LoginScreen = ({navigation}) => {
             console.log('Error during login : ', error);
         }
     }
+    
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Login</Text>
@@ -177,12 +163,15 @@ const RegisterScreen = ({navigation}) => {
             Alert.alert('Error', 'Password do not match');
             return;
         }
+
         try {
             const existingUser = await db.getFirstAsync('SELECT * FROM account WHERE emailaddress = ?', [email]);
             if (existingUser) {
                 Alert.alert('Error', 'Email already been used.');
                 return;
             }
+
+            AzureDBComm(`"INSERT INTO demo_account (emailaddress, username, password, authoritylevel) VALUES ('${email}', '${userName}', '${password}', 0);"`);
 
             await db.runAsync('INSERT INTO account (emailaddress, username, password, authoritylevel) VALUES (?, ?, ?, ?)', [email, userName, password, authority]);
             Alert.alert('Success', 'Registration successful!');
@@ -247,14 +236,91 @@ const HomeScreen = ({navigation, route}) => {
 }
 
 
-const ReportsScreen = ({navigation}) => {
-  return (
-    <View style = {styles.container}>
-      <Text style = {styles.title}>
-        View All Reports
-      </Text>
+const AzureReportsScreen = ({navigation}) => {
+  const [data, setData] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch('https://samplevisualdemocorewebapi-fwf5ezc9akacfhg5.eastus-01.azurewebsites.net/api/SampleVisual/GetStagingSamples', {
+          method: 'GET',
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const json = await response.json();
+        setData(json);
+      } catch (error) {
+        setData([]);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const handleButtonClick = async () => {
+    fetch('https://samplevisualdemocorewebapi-fwf5ezc9akacfhg5.eastus-01.azurewebsites.net/api/SampleVisual/ExecuteSql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: inputValue,
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.Message) {
+          console.log(data.Message);
+        } else {
+          console.log(data);
+          setData(data);
+        }
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+      });
+  };
+
+  const renderItem = ({ item }) => (
+    <View style={styles.row}>
+      <Text style={styles.cell}>{item.SampleID}</Text>
+      <Text style={styles.cell}>{item.HoleID}</Text>
+      <Text style={styles.cell}>{item.mTo}</Text>
+      <Text style={styles.cell}>{item.mFrom}</Text>
+      <Text>Edit</Text>
     </View>
-  )
+  );
+
+  const keyExtractor = (item) => item.SampleID;
+
+  return (
+    <View style={styles.reportContainer}>
+      <View style={styles.headerTopBar}>
+        <Text style={styles.headerTopBarText}>StagingRCSamples</Text>
+      </View>
+      <View style={styles.header}>
+        <Text style={styles.heading}>SampleID</Text>
+        <Text style={styles.heading}>HoleID</Text>
+        <Text style={styles.heading}>mFrom</Text>
+        <Text style={styles.heading}>mTo</Text>
+        <Text style={styles.heading}>Action</Text>
+      </View>
+      <FlatList
+        data={data}
+        keyExtractor={keyExtractor}
+        renderItem={renderItem}
+      />
+      <TextInput
+        placeholder="Enter SQL query."
+        value={inputValue}
+        onChangeText={setInputValue}
+        style={styles.InputBox}
+      />
+      <Button title="Execute" onPress={handleButtonClick} />
+    </View>
+  );
 }
 
 const FormsScreen = ({navigation}) => {
@@ -337,5 +403,72 @@ const styles = StyleSheet.create({
   userText: {
     fontSize: 18,
     marginBottom: 30,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  stepContainer: {
+    gap: 8,
+    marginBottom: 8,
+  },
+  reactLogo: {
+    height: 178,
+    width: 290,
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+  },
+  reportContainer: {
+    flex: 1,
+    backgroundColor: '#D6E7BB',
+    paddingVertical: 30,
+    paddingHorizontal: 30,
+  },
+  headerTopBar: {
+    backgroundColor: '#4F4F4F',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 5,
+    elevation: 2,
+  },
+  headerTopBarText: {
+    color: '#FFF',
+    fontSize: 16,
+  },
+  header: {
+    backgroundColor: "#80C342",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+  },
+  heading: {
+    flex: 1,
+    fontSize: 14,
+    color: '#000',
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 8,
+    marginHorizontal: 2,
+    elevation: 1,
+    borderRadius: 3,
+    borderColor: '#FFF',
+    padding: 10,
+    backgroundColor: '#FFF',
+  },
+  cell: {
+    fontSize: 14,
+    textAlign: 'left',
+    flex: 1,
+  },
+  InputBox: {
+    height: 40,
+    borderColor: '#4F4F4F',
+    borderWidth: 1,
+    marginBottom: 10,
+    backgroundColor: '#FFF',
   }
 });
