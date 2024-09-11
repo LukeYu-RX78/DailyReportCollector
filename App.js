@@ -103,7 +103,6 @@ const LoginScreen = ({navigation}) => {
 
     const db = useSQLiteContext();
     const [email, setEmail] = useState('');
-    const [userName, setUserName] = useState('');
     const [password, setPassword] = useState('');
 
     //function to handle login logic
@@ -121,10 +120,10 @@ const LoginScreen = ({navigation}) => {
             const validUser = await db.getFirstAsync('SELECT * FROM account WHERE emailaddress = ? AND password = ?', [email, password]);
             if(validUser) {
                 console.log(validUser);
+                console.log('username: ', validUser.username);
                 Alert.alert('Success', 'Login successful');
-                navigation.navigate('Home', {user:email});
+                navigation.navigate('Home', {user: validUser.username});
                 setEmail('');
-                setUserName('');
                 setPassword('');
             } else {
                 Alert.alert('Error', 'Incorrect password');
@@ -187,7 +186,7 @@ const RegisterScreen = ({navigation}) => {
 
             await db.runAsync('INSERT INTO account (emailaddress, username, password, authoritylevel) VALUES (?, ?, ?, ?)', [email, userName, password, authority]);
             Alert.alert('Success', 'Registration successful!');
-            navigation.navigate('Home', {user : email});
+            navigation.navigate('Home', {user : userName});
         } catch (error) {
             console.log('Error during registration : ', error);
         }
