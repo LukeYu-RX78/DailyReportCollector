@@ -422,7 +422,7 @@ const NewReportScreen = ({navigation}) => {
 
     const [rigid, setRigid] = useState('');
     const [department, setDepartment] = useState('');
-    const [shift, setShift] = useState('Day');
+    const [shift, setShift] = useState('');
     const [daytype, setDaytype] = useState('');
     const [machinehrsfrom, setMachinehrsfrom] = useState('');
     const [machinehrsto, setMachinehrsto] = useState('');
@@ -463,6 +463,15 @@ const NewReportScreen = ({navigation}) => {
         { id: 'Day', label: 'Day', value: 'Day'},
         { id: 'Night', label: 'Night', value: 'Night'}
     ]), []);
+
+    const checkDayOrNightShift = () => {
+        const currentHour = new Date().getHours();
+        if (currentHour >= 6 && currentHour < 18) {
+            setShift('Day');
+        } else {
+            setShift('Night');
+        }
+    };
 
     const validateMachineHrs = () => {
         const mFrom = parseFloat(machinehrsfrom); // Parse to float or number
@@ -523,6 +532,10 @@ const NewReportScreen = ({navigation}) => {
         Alert.alert('Submit', 'successful!');
         
     }
+
+    useEffect(() => {
+        checkDayOrNightShift();
+    }, []);
 
     return (
     <View style = {styles.container}>
