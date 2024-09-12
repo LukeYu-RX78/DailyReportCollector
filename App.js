@@ -410,7 +410,7 @@ const NewReportScreen = ({navigation}) => {
         { id: 'Night', label: 'Night', value: 'Night'}
     ]), []);
 
-    const handleSubmit = async () => {
+    const handleSave = async () => {
         const refid = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}
         ${String(currentDate.getDate()).padStart(2, '0')}_${shift}_${rigid}`;
 
@@ -445,6 +445,17 @@ const NewReportScreen = ({navigation}) => {
         } catch (error) {
             console.log('Error during registration : ', error);
         }
+    }
+
+    const handleSubmit = () => {
+        const refid = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}
+        ${String(currentDate.getDate()).padStart(2, '0')}_${shift}_${rigid}`;
+
+        const response = AzureDBComm(`"INSERT INTO drill_report (refid, contractno, client, rigid, department, 
+        date, shift, day, daytype, machinehrsfrom, machinehrsto, location, comments, reportstate) VALUES
+        ('${refid}', '${contractno}', '${client}', '${rigid}', '${department}', '${date}', '${shift}', '${day}', 
+        '${daytype}', '${machinehrsfrom}', '${machinehrsto}', '${location}', '${comments}', ${reportstate});"`);
+        Alert.alert(JSON.stringify(response));
     }
 
     return (
@@ -514,7 +525,10 @@ const NewReportScreen = ({navigation}) => {
             onChangeText={setComments}
         />
         <Pressable style={styles.button} onPress={handleSubmit}>
-            <Text style={styles.buttonText} >Submit</Text>
+            <Text style={styles.buttonText} >Submit to cloud base</Text>
+        </Pressable>
+        <Pressable style={styles.button} onPress={handleSave}>
+            <Text style={styles.buttonText} >Save in local</Text>
         </Pressable>
     </View>
 
