@@ -244,9 +244,13 @@ const AzureReportsScreen = ({navigation}) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://samplevisualdemocorewebapi-fwf5ezc9akacfhg5.eastus-01.azurewebsites.net/api/SampleVisual/GetStagingSamples', {
-          method: 'GET',
-        });
+        const response = await fetch('https://samplevisualdemocorewebapi-fwf5ezc9akacfhg5.eastus-01.azurewebsites.net/api/SampleVisual/ExecuteSql', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: '"Select * from demo_drill_report;"',
+    });
 
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
@@ -286,11 +290,11 @@ const AzureReportsScreen = ({navigation}) => {
 
   const renderItem = ({ item }) => (
     <View style={styles.row}>
-      <Text style={styles.cell}>{item.SampleID}</Text>
-      <Text style={styles.cell}>{item.HoleID}</Text>
-      <Text style={styles.cell}>{item.mTo}</Text>
-      <Text style={styles.cell}>{item.mFrom}</Text>
-      <Text>Edit</Text>
+      <Text style={styles.cell}>{item.rigid}</Text>
+      <Text style={styles.cell}>{item.dr_shift}</Text>
+      <Text style={styles.cell}>{item.department}</Text>
+      <Text style={styles.cell}>{item.machinehrsfrom}</Text>
+      <Text style={styles.cell}>{item.machinehrsto}</Text>
     </View>
   );
 
@@ -302,11 +306,11 @@ const AzureReportsScreen = ({navigation}) => {
         <Text style={styles.headerTopBarText}>StagingRCSamples</Text>
       </View>
       <View style={styles.header}>
-        <Text style={styles.heading}>SampleID</Text>
-        <Text style={styles.heading}>HoleID</Text>
+        <Text style={styles.heading}>RigID</Text>
+        <Text style={styles.heading}>Shift</Text>
+        <Text style={styles.heading}>Dept</Text>
         <Text style={styles.heading}>mFrom</Text>
         <Text style={styles.heading}>mTo</Text>
-        <Text style={styles.heading}>Action</Text>
       </View>
       <FlatList
         data={data}
@@ -370,7 +374,7 @@ const NewReportScreen = ({navigation}) => {
     const [rigid, setRigid] = useState('');
     const [department, setDepartment] = useState('');
     const [shift, setShift] = useState('');
-    const [daytype, setDaytype] = useState('');
+    const [daytype, setDaytype] = useState('Day');
     const [machinehrsfrom, setMachinehrsfrom] = useState('');
     const [machinehrsto, setMachinehrsto] = useState('');
     const [location, setLocation] = useState('');
@@ -396,14 +400,15 @@ const NewReportScreen = ({navigation}) => {
         {label: 'M', value: 'M'},
         {label: 'MX', value: 'MX'},
         {label: 'RD', value: 'RD'},
-    ]
+    ];
+
     const RigNoItems = [
         {label: 'TLUR01', value: 'TLUR01'},
         {label: 'TLUR02', value: 'TLUR02'},
         {label: 'TLUR03', value: 'TLUR03'},
         {label: 'TLUR09', value: 'TLUR09'},
         {label: 'TLUR11', value: 'TLUR11'},
-    ]
+    ];
 
     const radioButtons = useMemo(() => ([
         { id: 'Day', label: 'Day', value: 'Day'},
@@ -420,24 +425,6 @@ const NewReportScreen = ({navigation}) => {
         day: ${day}; daytype: ${daytype}; machinehrsfrom: ${machinehrsfrom}; machinehrsto: ${machinehrsto};
         location: ${location}; comments: ${comments}; reportsate: ${reportstate}`);
 
-        /*
-        * CREATE TABLE IF NOT EXISTS drill_report (
-              refid TEXT,
-              contractno TEXT,
-              client TEXT,
-              rigid TEXT,
-              department TEXT,
-              date TEXT,
-              shift TEXT,
-              day TEXT,
-              daytype TEXT,
-              machinehrsfrom TEXT,
-              machinehrsto TEXT,
-              location TEXT,
-              comments TEXT,
-              reportstate INTEGER
-            );*/
-
         try {
             await db.runAsync('INSERT INTO drill_report (refid, contractno, client, rigid, department, date, shift, day, daytype, machinehrsfrom, machinehrsto, location, comments, reportstate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [refid, contractno, client, rigid, department, date, shift, day, daytype, machinehrsfrom, machinehrsto, location, comments, reportstate]);
@@ -448,14 +435,18 @@ const NewReportScreen = ({navigation}) => {
     }
 
     const handleSubmit = () => {
-        const refid = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}
-        ${String(currentDate.getDate()).padStart(2, '0')}_${shift}_${rigid}`;
+        const refid = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}${String(currentDate.getDate()).padStart(2, '0')}_${shift}_${rigid}`;
 
-        const response = AzureDBComm(`"INSERT INTO drill_report (refid, contractno, client, rigid, department, 
-        date, shift, day, daytype, machinehrsfrom, machinehrsto, location, comments, reportstate) VALUES
-        ('${refid}', '${contractno}', '${client}', '${rigid}', '${department}', '${date}', '${shift}', '${day}', 
-        '${daytype}', '${machinehrsfrom}', '${machinehrsto}', '${location}', '${comments}', ${reportstate});"`);
-        Alert.alert(JSON.stringify(response));
+        const sql = `"INSERT INTO demo_drill_report (refid, contractno, client, rigid, department, dr_date, dr_shift,
+         dr_day, dr_daytype, machinehrsfrom, machinehrsto, dr_location, comments) VALUES 
+         ('${refid}', '${contractno}', '${client}', '${rigid}', '${department}', '${date}', '${shift}', '${day}', 
+        '${daytype}', '${machinehrsfrom}', '${machinehrsto}', '${location}', '${comments}');"`;
+
+        console.log(sql);
+        
+        const response = AzureDBComm(sql);
+        Alert.alert('Submit', 'successful!');
+        
     }
 
     return (
