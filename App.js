@@ -7,8 +7,6 @@ import React, { useState, useEffect, useMemo, Component } from 'react';
 import DropDownPicker from "react-native-dropdown-picker";
 import RadioGroup from "react-native-radio-buttons-group";
 
-
-//initialize the database
 const initDB = async(db) => {
     try {
         await db.execAsync(`
@@ -225,10 +223,11 @@ const RegisterScreen = ({navigation}) => {
 const HomeScreen = ({navigation, route}) => {
 
     const { user } = route?.params? route.params : 'Guest';
+    const currentUser = user ? user : 'Guest';
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Home</Text>
-            <Text style={styles.userText}>Welcome {user} !</Text>
+            <Text style={styles.userText}>Welcome {currentUser} !</Text>
             <Pressable style={styles.button} onPress={() => navigation.navigate('Login')}>
                 <Text style={styles.buttonText} >Logout</Text>
             </Pressable>
@@ -245,13 +244,12 @@ const AzureReportsScreen = ({navigation}) => {
     const fetchData = async () => {
       try {
         const response = await fetch('https://samplevisualdemocorewebapi-fwf5ezc9akacfhg5.eastus-01.azurewebsites.net/api/SampleVisual/ExecuteSql', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: '"Select * from demo_drill_report;"',
-    });
-
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: '"Select * from demo_drill_report;"',
+        });
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -298,12 +296,10 @@ const AzureReportsScreen = ({navigation}) => {
     </View>
   );
 
-  const keyExtractor = (item) => item.SampleID;
-
   return (
     <View style={styles.reportContainer}>
       <View style={styles.headerTopBar}>
-        <Text style={styles.headerTopBarText}>StagingRCSamples</Text>
+        <Text style={styles.headerTopBarText}>Cloud Base Daily Drill Report</Text>
       </View>
       <View style={styles.header}>
         <Text style={styles.heading}>RigID</Text>
@@ -314,11 +310,11 @@ const AzureReportsScreen = ({navigation}) => {
       </View>
       <FlatList
         data={data}
-        keyExtractor={keyExtractor}
+        keyExtractor={(item, index) => index.toString()}
         renderItem={renderItem}
       />
       <TextInput
-        placeholder="Enter SQL query."
+        placeholder="    Enter SQL query."
         value={inputValue}
         onChangeText={setInputValue}
         style={styles.InputBox}
@@ -331,32 +327,87 @@ const AzureReportsScreen = ({navigation}) => {
 const LocalReportsScreen = ({navigation}) => {
     const db = useSQLiteContext();
 
-    const fetchReport =  async() => {
+    const [data, setData] = useState([]);
+    const [inputValue, setInputValue] = useState('');
+
+    useEffect(() => {
+      const fetchReport =  async() => {
         try {
-            const report = await db.getFirstAsync('SELECT * FROM drill_report');
+            const report = await db.getFirstAsync('SELECT * FROM drill_report;');
             if (!report) {
                 console.log('Error, Reports does not exist !');
                 return;
             } else {
-                console.log(report);
-                Alert.alert('Local Reports:', JSON.stringify(report));
+              console.log(report);
+              console.log(typeof(report));
+              setData([report]);
             }
         } catch (error) {
             console.log('Error during fetch local reports : ', error);
         }
     }
 
+    fetchReport();
+    }, []);
 
+    const handleButtonClick = async () => {
+      fetch('https://samplevisualdemocorewebapi-fwf5ezc9akacfhg5.eastus-01.azurewebsites.net/api/SampleVisual/ExecuteSql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: inputValue,
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data.Message) {
+            console.log(data.Message);
+          } else {
+            console.log(data);
+            setData(data);
+          }
+        })
+        .catch((error) => {
+          console.error('Error:', error);
+        });
+    };
+  
+    const renderItem = ({ item }) => (
+      <View style={styles.row}>
+        <Text style={styles.cell}>{item.rigid}</Text>
+        <Text style={styles.cell}>{item.dr_shift}</Text>
+        <Text style={styles.cell}>{item.department}</Text>
+        <Text style={styles.cell}>{item.machinehrsfrom}</Text>
+        <Text style={styles.cell}>{item.machinehrsto}</Text>
+      </View>
+    );
+  
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>
-                View Local Reports
-            </Text>
-            <Pressable style={styles.button} onPress={() => fetchReport()}>
-                <Text style={styles.buttonText} >Check Report</Text>
-            </Pressable>
+      <View style={styles.reportContainer}>
+        <View style={styles.headerTopBar}>
+          <Text style={styles.headerTopBarText}>Local Daily Drill Report</Text>
         </View>
-    )
+        <View style={styles.header}>
+          <Text style={styles.heading}>RigID</Text>
+          <Text style={styles.heading}>Shift</Text>
+          <Text style={styles.heading}>Dept</Text>
+          <Text style={styles.heading}>mFrom</Text>
+          <Text style={styles.heading}>mTo</Text>
+        </View>
+        <FlatList
+          data={data}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={renderItem}
+        />
+        <TextInput
+          placeholder="Enter SQL query."
+          value={inputValue}
+          onChangeText={setInputValue}
+          style={styles.InputBox}
+        />
+        <Button title="Execute" onPress={handleButtonClick} />
+      </View>
+    );
 }
 
 
