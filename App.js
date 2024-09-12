@@ -19,18 +19,19 @@ const initDB = async(db) => {
               authoritylevel INTEGER
              );
             CREATE TABLE IF NOT EXISTS drill_report (
+              rid INTEGER PRIMARY KEY AUTOINCREMENT,
               refid TEXT,
               contractno TEXT,
               client TEXT,
               rigid TEXT,
               department TEXT,
-              date TEXT,
-              shift TEXT,
-              day TEXT,
-              daytype TEXT,
+              dr_date TEXT,
+              dr_shift TEXT,
+              dr_day TEXT,
+              dr_daytype TEXT,
               machinehrsfrom TEXT,
               machinehrsto TEXT,
-              location TEXT,
+              dr_location TEXT,
               comments TEXT,
               reportstate INTEGER
             );
@@ -302,7 +303,7 @@ const AzureReportsScreen = ({navigation}) => {
         <Text style={styles.headerTopBarText}>Cloud Base Daily Drill Report</Text>
       </View>
       <View style={styles.header}>
-        <Text style={styles.heading}>RigID</Text>
+        <Text style={styles.heading}>RigNo</Text>
         <Text style={styles.heading}>Shift</Text>
         <Text style={styles.heading}>Dept</Text>
         <Text style={styles.heading}>mFrom</Text>
@@ -333,14 +334,12 @@ const LocalReportsScreen = ({navigation}) => {
     useEffect(() => {
       const fetchReport =  async() => {
         try {
-            const report = await db.getFirstAsync('SELECT * FROM drill_report;');
+            const report = await db.getAllAsync('SELECT * FROM drill_report;');
             if (!report) {
                 console.log('Error, Reports does not exist !');
                 return;
             } else {
-              console.log(report);
-              console.log(typeof(report));
-              setData([report]);
+              setData(report);
             }
         } catch (error) {
             console.log('Error during fetch local reports : ', error);
@@ -350,33 +349,32 @@ const LocalReportsScreen = ({navigation}) => {
     fetchReport();
     }, []);
 
-    const handleButtonClick = async () => {
-      fetch('https://samplevisualdemocorewebapi-fwf5ezc9akacfhg5.eastus-01.azurewebsites.net/api/SampleVisual/ExecuteSql', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: inputValue,
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (data.Message) {
-            console.log(data.Message);
-          } else {
-            console.log(data);
-            setData(data);
-          }
-        })
-        .catch((error) => {
-          console.error('Error:', error);
-        });
+    const handleButtonClick = () => {
+      const ridToFind = parseInt(inputValue);
+      const foundReport = data.find((item) => item.rid === ridToFind);
+      if (foundReport) {
+  
+        const sql = `"INSERT INTO demo_drill_report (refid, contractno, client, rigid, department, dr_date, dr_shift,
+        dr_day, dr_daytype, machinehrsfrom, machinehrsto, dr_location, comments) VALUES 
+        ('${foundReport.refid}', '${foundReport.contractno}', '${foundReport.client}', '${foundReport.rigid}', '${foundReport.department}', 
+        '${foundReport.dr_date}', '${foundReport.dr_shift}', '${foundReport.dr_day}', '${foundReport.dr_daytype}', '${foundReport.machinehrsfrom}', 
+        '${foundReport.machinehrsto}', '${foundReport.dr_location}', '${foundReport.comments}');"`;
+
+       console.log(sql);
+       
+       const response = AzureDBComm(sql);
+       Alert.alert('Upload', 'successful!');
+
+      } else {
+        Alert.alert('Error', `No report found with RID: ${inputValue}`);
+      }
     };
   
     const renderItem = ({ item }) => (
       <View style={styles.row}>
+        <Text style={styles.cell}>{item.rid}</Text>
         <Text style={styles.cell}>{item.rigid}</Text>
         <Text style={styles.cell}>{item.dr_shift}</Text>
-        <Text style={styles.cell}>{item.department}</Text>
         <Text style={styles.cell}>{item.machinehrsfrom}</Text>
         <Text style={styles.cell}>{item.machinehrsto}</Text>
       </View>
@@ -388,9 +386,9 @@ const LocalReportsScreen = ({navigation}) => {
           <Text style={styles.headerTopBarText}>Local Daily Drill Report</Text>
         </View>
         <View style={styles.header}>
-          <Text style={styles.heading}>RigID</Text>
+          <Text style={styles.heading}>RID</Text>
+          <Text style={styles.heading}>RigNo</Text>
           <Text style={styles.heading}>Shift</Text>
-          <Text style={styles.heading}>Dept</Text>
           <Text style={styles.heading}>mFrom</Text>
           <Text style={styles.heading}>mTo</Text>
         </View>
@@ -400,12 +398,12 @@ const LocalReportsScreen = ({navigation}) => {
           renderItem={renderItem}
         />
         <TextInput
-          placeholder="Enter SQL query."
+          placeholder="    Enter the RID that you want to upload."
           value={inputValue}
           onChangeText={setInputValue}
           style={styles.InputBox}
         />
-        <Button title="Execute" onPress={handleButtonClick} />
+        <Button title="Upload Data" onPress={handleButtonClick} />
       </View>
     );
 }
@@ -424,8 +422,8 @@ const NewReportScreen = ({navigation}) => {
 
     const [rigid, setRigid] = useState('');
     const [department, setDepartment] = useState('');
-    const [shift, setShift] = useState('');
-    const [daytype, setDaytype] = useState('Day');
+    const [shift, setShift] = useState('Day');
+    const [daytype, setDaytype] = useState('');
     const [machinehrsfrom, setMachinehrsfrom] = useState('');
     const [machinehrsto, setMachinehrsto] = useState('');
     const [location, setLocation] = useState('');
@@ -467,8 +465,7 @@ const NewReportScreen = ({navigation}) => {
     ]), []);
 
     const handleSave = async () => {
-        const refid = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}
-        ${String(currentDate.getDate()).padStart(2, '0')}_${shift}_${rigid}`;
+        const refid = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}${String(currentDate.getDate()).padStart(2, '0')}_${shift}_${rigid}`;
 
         console.log('Submit content:');
         console.log('Submit:',`refid: ${refid}; client: ${client}; contractno: ${contractno}; 
@@ -477,7 +474,7 @@ const NewReportScreen = ({navigation}) => {
         location: ${location}; comments: ${comments}; reportsate: ${reportstate}`);
 
         try {
-            await db.runAsync('INSERT INTO drill_report (refid, contractno, client, rigid, department, date, shift, day, daytype, machinehrsfrom, machinehrsto, location, comments, reportstate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            await db.runAsync('INSERT INTO drill_report (refid, contractno, client, rigid, department, dr_date, dr_shift, dr_day, dr_daytype, machinehrsfrom, machinehrsto, dr_location, comments, reportstate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                 [refid, contractno, client, rigid, department, date, shift, day, daytype, machinehrsfrom, machinehrsto, location, comments, reportstate]);
             Alert.alert('Success', 'Store report successful!');
         } catch (error) {
