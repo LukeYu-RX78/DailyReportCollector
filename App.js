@@ -271,7 +271,7 @@ const AzureReportsScreen = ({navigation}) => {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: inputValue,
+      body: `"${inputValue}"`,
     })
       .then((response) => response.json())
       .then((data) => {
@@ -464,7 +464,30 @@ const NewReportScreen = ({navigation}) => {
         { id: 'Night', label: 'Night', value: 'Night'}
     ]), []);
 
+    const validateMachineHrs = () => {
+        const mFrom = parseFloat(machinehrsfrom); // Parse to float or number
+        const mTo = parseFloat(machinehrsto);
+
+        if (isNaN(mFrom) || isNaN(mTo)) {
+            Alert.alert('Error', 'Please input valid numbers for "Machine Hrs From" and "Machine Hrs To".');
+            return false;
+        }
+        if (mFrom < 0 || mTo < 0) {
+            Alert.alert('Error', '"Machine Hrs From" and "Machine Hrs To" can not be negative.');
+            return false;
+        }
+        if (mFrom >= mTo) {
+            Alert.alert('Error', '"Machine Hrs To" must greater than "Machine Hrs From".');
+            return false;
+        }
+        return true;
+    };
+
     const handleSave = async () => {
+        if(!validateMachineHrs()) {
+            return;
+        }
+
         const refid = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}${String(currentDate.getDate()).padStart(2, '0')}_${shift}_${rigid}`;
 
         console.log('Submit content:');
@@ -483,6 +506,10 @@ const NewReportScreen = ({navigation}) => {
     }
 
     const handleSubmit = () => {
+        if(!validateMachineHrs()) {
+            return;
+        }
+
         const refid = `${currentDate.getFullYear()}${String(currentDate.getMonth() + 1).padStart(2, '0')}${String(currentDate.getDate()).padStart(2, '0')}_${shift}_${rigid}`;
 
         const sql = `"INSERT INTO demo_drill_report (refid, contractno, client, rigid, department, dr_date, dr_shift,
