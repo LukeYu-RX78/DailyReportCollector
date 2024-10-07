@@ -104,5 +104,13 @@ The APK or AAB file will be downloaded once the build is complete.
 # 5. Additional Resources
 
 Expo Documentation: https://docs.expo.dev/
+
 React Native Documentation: https://reactnative.dev/docs/getting-started
+
 EAS Build Documentation: https://docs.expo.dev/build/introduction/
+
+Submit to Testflight: https://www.youtube.com/watch?v=PdwYDatvJ2I
+
+Submit to Google Play: https://www.youtube.com/watch?v=oBWBDaqNuws&list=PLHfQqVIi_kHQt4K8Y9BT2hD5eFPQcfGxg&index=38
+
+Submit to Apple App Store: https://www.youtube.com/watch?v=LE4Mgkrf7Sk&list=PLHfQqVIi_kHQt4K8Y9BT2hD5eFPQcfGxg&index=37
